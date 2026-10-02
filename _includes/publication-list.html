@@ -1,0 +1,20 @@
+{% assign publication_years = site.publications | map: "year" | uniq | sort | reverse %}
+{% for year in publication_years %}
+<section class="publications-by-year">
+  <h2 id="publications-{{ year }}">{{ year }}</h2>
+  {% for publication in site.publications %}
+    {% if publication.year == year %}
+    <article class="archive__item publication-item">
+      <h3 class="archive__item-title">{{ publication.title }}</h3>
+      <p>{{ publication.citation }}</p>
+      <p><em>{{ publication.venue }}</em>, {{ publication.year }}</p>
+      {% if publication.code_repository %}
+      <p>GitHub code repository: {{ publication.code_repository }}</p>
+      {% elsif publication.github_code %}
+      <p>GitHub code repository</p>
+      {% endif %}
+    </article>
+    {% endif %}
+  {% endfor %}
+</section>
+{% endfor %}
