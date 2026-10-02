@@ -104,6 +104,7 @@ analytics:
 
 include:
   - .htaccess
+  - _pages
 exclude:
   - "*.sublime-project"
   - "*.sublime-workspace"
@@ -136,6 +137,16 @@ exclude:
   - _portfolio
   - _talks
   - _teaching
+  - files
+  - talkmap
+  - talkmap.ipynb
+  - talkmap.py
+  - talkmap_out.ipynb
+  - markdown_generator
+  - scripts
+  - AGENTS.md
+  - docker-compose.yaml
+  - _config_docker.yml
 keep_files:
   - .git
   - .svn
