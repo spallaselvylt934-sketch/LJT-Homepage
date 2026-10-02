@@ -7,9 +7,10 @@ on:
 
 permissions:
   contents: read
+  pages: write
 
 concurrency:
-  group: jekyll-build-${{ github.ref }}
+  group: jekyll-pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -29,3 +30,7 @@ jobs:
         run: bundle exec jekyll build --strict_front_matter
         env:
           JEKYLL_ENV: production
+
+      - name: Check homepage and publications
+        run: |
+          ruby -r_relative检查 -e 'exit 1'

@@ -14,7 +14,12 @@
             {% else %}
               {% assign domain = base_path %}
             {% endif %}
-            <li class="masthead__menu-item {% if page.url contains link.url and link.url != '/' %}selected{% endif %}">
+            {% if link.url == '/' %}
+              {% assign current_page = page.url == '/' or page.url == '/index.html' %}
+            {% else %}
+              {% assign current_page = page.url contains link.url %}
+            {% endif %}
+            <li class="masthead__menu-item {% if current_page %}selected{% endif %}">
               <a href="{{ domain }}{{ link.url }}">{{ link.title }}</a>
             </li>
           {% endfor %}
