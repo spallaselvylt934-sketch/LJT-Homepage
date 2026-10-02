@@ -27,10 +27,7 @@ jobs:
           bundler-cache: true
 
       - name: Build site
-        run: |
-          bundle exec jekyll build --strict_front_matter --destination _site
-          ls -la
-          find _site -maxdepth 2 -type f -print
+        run: bundle exec jekyll build --strict_front_matter --destination _site
         env:
           JEKYLL_ENV: production
 
@@ -53,21 +50,23 @@ jobs:
             failures << "Missing publication on about page: #{title}" unless about_text.include?(title)
             failures << "Missing publication on publications page: #{title}" unless publications_text.include?(title)
           end
-          %w[Education Honors "Research Experience" Skills Contact].each do |section|
+          ['Education', 'Honors', 'Research Experience', 'Skills', 'Contact'].each do |section|
             failures << "Missing about section: #{section}" unless about_text.include?(section)
           end
-          %w[Junteng Liu jliugi@connect.ust.hk Vicent0205 junteng88716710 MINIMAX "Tencent WXG" "Shanghai AI Lab" "Zhiyuan Honor Scholarship"].each do |detail|
+          ['Junteng Liu', 'jliugi@connect.ust.hk', 'Vicent0205', 'junteng88716710', 'MINIMAX', 'Tencent WXG', 'Shanghai AI Lab', 'Zhiyuan Honor Scholarship'].each do |detail|
             failures << "Missing profile detail: #{detail}" unless about_text.include?(detail)
           end
           [about_text, publications_text].each do |page|
             failures << 'Unreplaced template content' if page.match?(/Your Name|Paper Title Number|Red Brick University|example\.org|GitHub Journal of Bugs/)
           end
-          puts "Found #{titles.length} publications in the source."
+          html_pages = Dir.glob('_site/**/*.html') + ['_site/index.html']
+          failures << 'Unexpected additional pages' unless html_pages.sort == ['_site/index.html', '_site/publications/index.html'].sort
+          puts "Found #{titles.length} publications on both pages."
           unless failures.empty?
             puts failures
             exit 1
           end
-          puts 'Verified both pages contain all six publications and the profile details.'
+          puts 'Verified the two-page site, all publications, and the profile details.'
           RUBY
 
       - name: Ensure GitHub Pages is enabled
