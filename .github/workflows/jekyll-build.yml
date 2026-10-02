@@ -35,24 +35,34 @@ jobs:
         run: |
           ruby <<'RUBY'
           require 'yaml'
+          require 'cgi'
           titles = Dir.glob('_publications/*.md').map do |path|
             YAML.load_file(path).fetch('title')
           end
           raise 'Expected six publications' unless titles.length == 6
           about = File.read('_site/index.html')
           publications = File.read('_site/publications/index.html')
+          normalize = ->(text) { CGI.unescapeHTML(text.gsub(/<[^>]*>/, ' ')).gsub(/\s+/, ' ').strip }
+          about_text = normalize.call(about)
+          publications_text = normalize.call(publications)
+          failures = []
           titles.each do |title|
-            raise "Missing publication on about page: #{title}" unless about.include?(title)
-            raise "Missing publication on publications page: #{title}" unless publications.include?(title)
+            failures << "Missing publication on about page: #{title}" unless about_text.include?(title)
+            failures << "Missing publication on publications page: #{title}" unless publications_text.include?(title)
           end
           %w[Education Honors "Research Experience" Skills Contact].each do |section|
-            raise "Missing about section: #{section}" unless about.include?(section)
+            failures << "Missing about section: #{section}" unless about_text.include?(section)
           end
           %w[Junteng Liu jliugi@connect.ust.hk Vicent0205 junteng88716710 MINIMAX "Tencent WXG" "Shanghai AI Lab" "Zhiyuan Honor Scholarship"].each do |detail|
-            raise "Missing profile detail: #{detail}" unless about.include?(detail)
+            failures << "Missing profile detail: #{detail}" unless about_text.include?(detail)
           end
-          [about, publications].each do |page|
-            raise 'Unreplaced template content' if page.match?(/Your Name|Paper Title Number|Red Brick University|example\.org|GitHub Journal of Bugs/)
+          [about_text, publications_text].each do |page|
+            failures << 'Unreplaced template content' if page.match?(/Your Name|Paper Title Number|Red Brick University|example\.org|GitHub Journal of Bugs/)
+          end
+          puts "Found #{titles.length} publications in the source."
+          unless failures.empty?
+            puts failures
+            exit 1
           end
           puts 'Verified both pages contain all six publications and the profile details.'
           RUBY
