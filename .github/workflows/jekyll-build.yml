@@ -33,4 +33,63 @@ jobs:
 
       - name: Check homepage and publications
         run: |
-          ruby -r_relative检查 -e 'exit 1'
+          ruby <<'RUBY'
+          require 'yaml'
+          titles = Dir.glob('_publications/*.md').map do |path|
+            YAML.load_file(path).fetch('title')
+          end
+          raise 'Expected six publications' unless titles.length == 6
+          about = File.read('_site/index.html')
+          publications = File.read('_site/publications/index.html')
+          titles.each do |title|
+            raise "Missing publication on about page: #{title}" unless about.include?(title)
+            raise "Missing publication on publications page: #{title}" unless publications.include?(title)
+          end
+          %w[Education Honors "Research Experience" Skills Contact].each do |section|
+            raise "Missing about section: #{section}" unless about.include?(section)
+          end
+          %w[Junteng Liu jliugi@connect.ust.hk Vicent0205 junteng88716710 MINIMAX "Tencent WXG" "Shanghai AI Lab" "Zhiyuan Honor Scholarship"].each do |detail|
+            raise "Missing profile detail: #{detail}" unless about.include?(detail)
+          end
+          [about, publications].each do |page|
+            raise 'Unreplaced template content' if page.match?(/Your Name|Paper Title Number|Red Brick University|example\.org|GitHub Journal of Bugs/)
+          end
+          puts 'Verified both pages contain all six publications and the profile details.'
+          RUBY
+
+      - name: Ensure GitHub Pages is enabled
+        env:
+          PAGES_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -eu
+          api="${GITHUB_API_URL}/repos/${{ github.repository }}/pages"
+          status=$(curl -sS -o /tmp/pages-settings.json -w '%{http_code}' -H "Authorization: Bearer ${PAGES_TOKEN}" -H 'Accept: application/vnd.github+json' "$api")
+          if [ "$status" = 404 ]; then
+            curl -fsS -X POST -H "Authorization: Bearer ${PAGES_TOKEN}" -H 'Accept: application/vnd.github+json' -H 'Content-Type: application/json' -d '{"source":{"branch":"master","path":"/"}}' "$api"
+          elif [ "$status" != 200 ]; then
+            cat /tmp/pages-settings.json
+            exit 1
+          fi
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
