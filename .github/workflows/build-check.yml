@@ -1,0 +1,46 @@
+name: Build check
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1.328.0
+        with:
+          ruby-version: '3.1'
+          bundler-cache: true
+          cache-version: 0
+      - name: Install UglifyJS
+        run: npm install -g uglify-js
+      - name: Minify JS files
+        run: |
+          uglifyjs assets/js/plugins/jquery.greedy-navigation.js assets/js/_main.js assets/js/theme.js -c -m -o assets/js/main.min.js
+      - name: Build with Jekyll
+        run: bundle exec jekyll build --baseurl "/LJT-Homepage"
+        env:
+          JEKYLL_ENV: production
+      - name: List generated pages
+        run: |
+          find _site -name "*.html" | sort
+      - name: Check homepage content
+        run: |
+          grep -c "Junteng Liu" _site/index.html
+          grep -o "jliugi@connect.ust.hk" _site/index.html | head -1
+          grep -o "SynLogic" _site/index.html | head -1
+      - name: Check publications page
+        run: |
+          grep -o "C-Eval" _site/publications/index.html | head -1
+          grep -o "In-Context Sharpness" _site/publications/index.html | head -1
+          grep -o "Universal Truthfulness Hyperplane" _site/publications/index.html | head -1
